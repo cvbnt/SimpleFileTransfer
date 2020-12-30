@@ -1,16 +1,23 @@
 package com.hao123.file.Controller;
 
-import com.sun.deploy.net.URLEncoder;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author cvbnt
@@ -73,8 +80,27 @@ public class controller {
         //设置响应状态
         HttpStatus statusCode = HttpStatus.OK;
         in.close();
-        ResponseEntity<byte[]> entity = new ResponseEntity<byte[]>(body, headers, statusCode);
-        return entity;
+        return new ResponseEntity<>(body, headers, statusCode);
         //返回
     }
+
+    @RequestMapping("/pdf/{fileName}")
+    public void downloadPDFResource(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    @PathVariable("fileName") String fileName) throws UnsupportedEncodingException {
+        //Check the renderer
+        String dataDirectory = "F:/upload";
+        Path file = Paths.get(dataDirectory, fileName);
+        if (Files.exists(file)) {
+            response.setContentType("Save As APPLICATION/OCTET-STREAM");
+            response.addHeader("Content-Disposition", "attachment; filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            try {
+                Files.copy(file, response.getOutputStream());
+                response.getOutputStream().flush();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
 }
